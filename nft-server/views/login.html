@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NFT Login</title>
+</head>
+<body>
+  <h2>NFT Owner Login</h2>
+
+  <button id="connectBtn">Connect Wallet</button>
+  <button id="signBtn">Sign & Login</button>
+
+  <p id="status">Not connected</p>
+
+  <script>
+    let userAddress = null;
+    let challengeMessage = null;
+
+    const status = document.getElementById("status");
+
+    document.getElementById("connectBtn").onclick = async () => {
+      if (!window.ethereum) {
+        status.innerText = "No wallet detected";
+        return;
+      }
+
+      try {
+        // REAL wallet connection (works with Rabby)
+        const accounts = await window.ethereum.request({
+          method: "eth_requestAccounts"
+        });
+
+        userAddress = accounts[0];
+        status.innerText = "Connected: " + userAddress;
+
+      } catch (err) {
+        console.error(err);
+        status.innerText = "Connection failed";
+      }
+    };
+
+    document.getElementById("signBtn").onclick = async () => {
+      if (!userAddress) {
+        status.innerText = "Connect wallet first";
+        return;
+      }
+
+      try {
+        // 🔹 Step 1: Get challenge from backend
+        const res = await fetch(`/challenge?address=${userAddress}`);
+        const data = await res.json();
+
+        challengeMessage = data.message;
+
+        // 🔹 Step 2: Sign message
+        const signature = await window.ethereum.request({
+          method: "personal_sign",
+          params: [challengeMessage, userAddress]
+        });
+
+        // 🔹 Step 3: Send to backend for verification
+        const verifyRes = await fetch("/verify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            address: userAddress,
+            signature: signature,
+            message: challengeMessage
+          })
+        });
+
+        const verifyData = await verifyRes.json();
+
+        if (verifyData.success) {
+          status.innerText = "Login successful";
+
+          
+          window.location.href = "/asset";
+        } else {
+          status.innerText = "Login failed";
+        }
+
+      } catch (err) {
+        console.error(err);
+        status.innerText = "Error during login";
+      }
+    };
+  </script>
+</body>
+</html>

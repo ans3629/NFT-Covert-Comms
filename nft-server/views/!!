@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Owner NFT View</title>
+    <style>
+        body { font-family: Arial; color: #fff; text-align: center; padding: 50px; background: #111; }
+        img { max-width: 400px; border-radius: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <img src="/static/asset.png" width="">
+    <p>Downloadable</p>
+    <button onclick="downloadImage()">Download Image</button>
+    <script>
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.href = '/asset.png';
+            link.download = 'asset.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
