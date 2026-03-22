@@ -1,0 +1,6 @@
+{
+  "name": "Banana Duck",
+  "description": "NFT of a banana duck",
+  "image": "http://192.168.81.156:3000/static/banana_duck_nft.png"
+  "external_url": "http://192.168.81.156:3000/view"
+}

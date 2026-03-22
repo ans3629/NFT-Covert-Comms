@@ -1,3 +1,6 @@
+require('dotenv').config(); 
+const fs = require('fs');
+const crypto = require ('crypto')
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
@@ -8,24 +11,42 @@ const app = express();
 //running on port 3000
 const PORT = 3000;
 
-//TODO Acquire key and input here
+//set api key (environment variable for security reasons)
 const provider = new ethers.JsonRpcProvider(
-	"https://sepolia.infura.io/v3/YOUR_INFURA_KEY"
+	`https://sepolia.infura.io/v3/${process.env.INFURA_KEY}`
 );
 
-//TODO Get contract address
-const CONTRACT_ADDRESS = "contract_address";
+//set contract address
+const CONTRACT_ADDRESS = "0xD10F1517Ff4DcC47b745358113a5731EAb1b02D0";
 const ABI = [
 	"function ownerOf(uint256 tokenId) view returns (address)"
 ];
 
 const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-//TODO Get token ID
+//token id is 1 because I only made 1 token
 const TOKEN_ID= 1;
+
+//helper function to decrypt the hidden message 
+//the message is stored AES encrypted in secret_message.enc for security purposes
+function decryptMessage(filePath) {
+    const algorithm = 'aes-256-cbc';
+    const key = Buffer.from(process.env.MESSAGE_KEY, 'hex');
+
+    // Read the encrypted file
+    const fileContents = fs.readFileSync(filePath, 'utf8');
+    const { iv, data } = JSON.parse(fileContents);
+
+    // Decrypt
+    const decipher = crypto.createDecipheriv(algorithm, key, Buffer.from(iv, 'hex'));
+    let decrypted = decipher.update(data, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return decrypted;
+}
 
 app.use(express.json());
 app.use(session({
-	secret: 'supersecretkey',
+	secret: process.env.SESSION_SECRET,
 	resave: false,
 	saveUninitialized: true
 }));
@@ -80,11 +101,11 @@ app.post("/verify", async (req, res) => {
         req.session.verifiedOwner = true;
         req.session.ownerAddress = recoveredAddress;
 
-        // CHANGE MESSAGE HERE 
-	const hiddenMessage = "Secret message for now";
+        // To change message, run encrypt_message.py
+	const hiddenMessage = decryptMessage('messages/secret_message.enc');
 
 	// run encoding script with the signature and message
-        const command = `python scripts/encode.py "${signature}" "${hiddenMessage}"`;
+        const command = `python3 scripts/encode.py "${signature}" "${hiddenMessage}"`;
 	
 	//error stuff
         exec(command, (error, stdout, stderr) => {

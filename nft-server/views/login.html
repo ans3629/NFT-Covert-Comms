@@ -46,19 +46,19 @@
       }
 
       try {
-        // 🔹 Step 1: Get challenge from backend
+        // Get challenge from backend
         const res = await fetch(`/challenge?address=${userAddress}`);
         const data = await res.json();
 
         challengeMessage = data.message;
 
-        // 🔹 Step 2: Sign message
+        // Sign message
         const signature = await window.ethereum.request({
           method: "personal_sign",
           params: [challengeMessage, userAddress]
         });
 
-        // 🔹 Step 3: Send to backend for verification
+        // Send to backend for verification
         const verifyRes = await fetch("/verify", {
           method: "POST",
           headers: {
